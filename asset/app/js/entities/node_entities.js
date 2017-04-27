@@ -614,6 +614,136 @@ DesignerApp.module("NodeEntities", function(NodeEntities, DesignerApp, Backbone,
 
     };
 
+    // Laravel Code Generator
+    // -------------------------
+
+    NodeEntities.GeneratePHPClass = function(options){
+        var params = {
+            namespace: "App",
+            uses: [],
+            classname: "",
+            extend: "",
+            content: ""
+        };
+        for(k in options)
+            params[k] = options[k];
+
+        var namespace = (params.namespace=="")?"":"\nnamespace "+params.namespace+'\n';
+        var uses = "";
+        var extend = (params.extend=="")?"":" extends "+params.extend;
+        var content = params.content.split("\n").map(function(a){return '\t'+a;}).join("\n");
+        for(use in params.uses){
+            uses += "\nuse "+params.uses[use]+";";
+        }
+        uses += (uses=="")?"":"\n";
+        return '<?php \n'+namespace+uses+'\nclass '+params.classname+extend+'\n{\n'+content+'\n}\n';
+    }
+    NodeEntities.GeneratePHPFunction = function(options){
+        var params = {
+            name: "",
+            params: "",
+            content: ""
+        };
+        for(k in options)
+            params[k] = options[k];
+        
+        var content = params.content.split("\n").map(function(a){return '\t'+a;}).join("\n");
+        
+        return 'public function '+ params.name +'('+params.params+'){\n'+content+'\n}';
+    }
+
+    NodeEntities.GenerateRelationCode = function(relation){
+        var foreign = (relation.foreignkeys!="")?", "+relation.foreignkeys:"";
+        return NodeEntities.GeneratePHPFunction({
+            name: relation.name,
+            content: '\treturn $this->'+ relation.relationtype + '(' + relation.relatedmodel + foreign +')' + relation.extramethods + ';'
+        });
+    }
+
+    NodeEntities.GenerateLaravelModel = function(table){
+        var classParams = {
+            extends: 'Model',
+            uses: ['Illuminate\\Database\\Eloquent\\Model'],
+            namespace: table.namespace,
+            classname: table.classname,
+            content: '//'
+        };
+        
+        classParams.content += "\nprotected $table = '"+table.name+"';";
+        
+        if (table.timestamp){
+            classParams.content += "\npublic $timestamps = true;\n";
+        }
+        if (table.softdelete){
+            classParams.uses.push("Illuminate\\Database\\Eloquent\\SoftDeletes");
+            classParams.content += "\nuse SoftDeletes;\nprotected $dates = ['deleted_at'];\n";
+        }
+        var fillable = [];
+        table.column.map(function(a){
+            if(a.fillable)
+                fillable.push("'"+a.name+"'");
+        });
+        if (fillable.length > 0)
+            classParams.content += "\nprotected $fillable = array("+fillable.join(', ')+");\n";
+        var functions = table.relation.map(function(r){
+            return "\n"+NodeEntities.GenerateRelationCode(r)+"\n";
+        }).join('\n');
+
+        classParams.content += functions;
+
+        return NodeEntities.GeneratePHPClass(classParams);
+    }
+
+    NodeEntities.GenerateLaravelMigration = function(table, migration_name){
+        var classParams = {
+            extends: 'Migration',
+            uses: [
+                'Illuminate\\Support\\Facades\\Schema',
+                'Illuminate\\Database\\Schema\\Blueprint',
+                'Illuminate\\Database\\Migrations\\Migration'
+            ],
+            classname: (migration_name!==undefined)?migration_name:table.classname,
+            content: []
+        };
+        var f_up = [];
+
+        table.column.map(function(column){
+            var extraparams = '';
+            var extramethods = [];
+            if(column['length'] != "")
+                extraparams += ", "+column['length'];
+            if(column.enumvalue != "")
+                extraparams += ', '+column.enumvalue.split(',').map(function(a){
+                    return "'"+a.trim()+"'";
+                }).join(', ');
+            f_up.push('$table->'+column.type+"('"+column.name+"'"+extraparams+")"+((extramethods.length>0)?'->':'')+extramethods.join('->')+";");
+        });
+
+        if(table.timestamp){
+            f_up.push('$table->timestamps();');
+        }
+        if(table.softdelete){
+            f_up.push('$table->softDeletes();');
+        }
+
+        if(f_up.length > 0)
+            classParams.content.push('/**\n* Run the migrations.*\n* @return void\n*/\n'+NodeEntities.GeneratePHPFunction({
+                name: 'up',
+                content: "Schema::create('"+table.name+"', function (Blueprint $table) {\n"+
+                    f_up.map(function(a){return "\t"+a;}).join('\n')+
+                    "\n});"
+            }));
+
+        classParams.content.push('/**\n* Reverse the migrations.\n*\n* @return void\n*/\n'+NodeEntities.GeneratePHPFunction({
+            name: 'down',
+            content: "Schema::dropIfExists('"+table.name+"');"
+        }));
+
+        classParams.content = classParams.content.join('\n\n');
+
+        return NodeEntities.GeneratePHPClass(classParams);
+    }
+
     // Initializers
     // -------------------------
 
