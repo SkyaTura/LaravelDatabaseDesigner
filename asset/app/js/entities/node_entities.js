@@ -652,7 +652,18 @@ DesignerApp.module("NodeEntities", function(NodeEntities, DesignerApp, Backbone,
         return 'public function '+ params.name +'('+params.params+'){\n'+content+'\n}';
     }
 
-    NodeEntities.GenerateRelationCode = function(relation){
+    NodeEntities.GenerateRelationCode = function(relationP){
+        var relation = {
+            foreignkeys: '',
+            name: '',
+            relationtype: '',
+            relatedmodel: '',
+            extramethods: ''
+        }
+        for(k in relationP)
+            if (relationP[k] !== undefined)
+                relation[k] = relationP[k];
+
         var foreign = (relation.foreignkeys!="")?", "+relation.foreignkeys:"";
         return NodeEntities.GeneratePHPFunction({
             name: relation.name,

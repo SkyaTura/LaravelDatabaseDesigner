@@ -193,6 +193,23 @@
                         </div>
                     </div>
                 </div>
+                <table class="table table_constraint" style="display: table; width: 100%;">
+                    <thead>
+                        <tr>
+                        <th>References</th>
+                        <th>On (table)</th>
+                        <th>onUpdate</th>
+                        <th>onDelete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                    <td><select class="references" style="width: 115px;" name="references"> </select></td>
+                    <td><select class="ontable" style="width: 115px;" onchange="javascript:get_foreign_keys();" name="ontable"> </select></td>
+                    <td><select class="onupdate" style="width: 115px;" id="onupdate" name="onupdate"><option value="restrict">restrict</option><option value="no action">no action</option><option value="cascade">cascade</option><option value="set null">set null</option></select></td>
+                    <td> <select class="ondelete" style="width: 115px;" id="ondelete" name="ondelete"><option value="restrict">restrict</option><option value="no action">no action</option><option value="cascade">cascade</option><option value="set null">set null</option></select></td>
+                    </tr></tbody>
+                </table>
                 <!-- Button (Double) -->
                 <div class="form-group">
                     <label class="col-md-4 control-label" for="button1id"></label>
@@ -402,10 +419,10 @@
                             
                         </div>
                     </div>
+                    <pre id="relation-resultfunction"> </pre>
                     <div class="form-group">
                         <div class="col-md-8" style="float: right">
                             <button id="btnsave" name="button1id" class="ok save btn btn-success">Save</button>
-                            <button id="btndelete" name="button2id" class="ok delete btn btn-danger">Delete</button>
                             <button id="btncancel" name="button2id" class="cancel btn btn-primary">Cancel</button>
                         </div>
                     </div>

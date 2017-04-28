@@ -12,7 +12,10 @@ DesignerApp.module("NodeModule.Modal", function(Modal, DesignerApp, Backbone, Ma
         idPrefix: "relation",
         template: _.template($('#relationcreate-template').html()),
         events: {
-            "click .ok": "okClicked"
+            "click .ok": "okClicked",
+            "keyup input": "updateFunction",
+            "keydown input": "updateFunction",
+            "change input,select,textarea": "updateFunction"
         },
         okClicked: function() {
             var data = Backbone.Syphon.serialize(this);
@@ -41,8 +44,15 @@ DesignerApp.module("NodeModule.Modal", function(Modal, DesignerApp, Backbone, Ma
             }
 
             this.$('#relation-relatedmodel').find('option[value=' + this.model.get('classname') + ']').remove(); //remove self (model) from option list
-            //
+            this.$('#relation-resultfunction').html(DesignerApp.NodeEntities.GenerateRelationCode({}));
+
             return this.el;
+        },
+        updateFunction: function() {
+            var relation = {
+
+            };
+            this.$('#relation-resultfunction').html(DesignerApp.NodeEntities.GenerateRelationCode(Backbone.Syphon.serialize(this)));
         }
     });
 
@@ -57,7 +67,10 @@ DesignerApp.module("NodeModule.Modal", function(Modal, DesignerApp, Backbone, Ma
         },
         events: {
             "click #btnsave.ok": "okClicked",
-            "click #btndelete.delete": "delClicked"
+            "click #btndelete.delete": "delClicked",
+            "keyup input": "updateFunction",
+            "keydown input": "updateFunction",
+            "change input,select,textarea": "updateFunction"
         },
         delClicked: function(e) {
             this.trigger("delClicked", this.model);
@@ -79,9 +92,15 @@ DesignerApp.module("NodeModule.Modal", function(Modal, DesignerApp, Backbone, Ma
             this.$('#relation-relatedmodel').find('option[value=' + this.model.get('relatedmodel') + ']').attr('selected', 'selected'); //make destination selected by default
             this.$('#relation-relationtype').find('option[value=' + this.model.get('relationtype') + ']').attr('selected', 'selected'); //make destination selected by default
             this.$('#relation-relatedmodel').find('option[value=' + this.container.get('classname') + ']').remove(); //remove self (model) from option list
-
+            this.$('#relation-resultfunction').html(DesignerApp.NodeEntities.GenerateRelationCode(this.model.toJSON()));
             return this.el;
 
+        },
+        updateFunction: function() {
+            var relation = {
+
+            };
+            this.$('#relation-resultfunction').html(DesignerApp.NodeEntities.GenerateRelationCode(Backbone.Syphon.serialize(this)));
         }
     });
 
